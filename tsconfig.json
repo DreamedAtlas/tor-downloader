@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "module": "commonjs",
+    "newLine": "LF",
+    "noImplicitAny": true,
+    "outDir": "./dist",
+    "removeComments": true,
+    "target": "ES6"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
