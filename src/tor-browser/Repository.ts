@@ -11,11 +11,28 @@ class Repository {
     private _repositoryUrl: string;
 
     constructor(repositoryUrl: string = Repository.MAIN_REPOSITORY_URL) {
+        if (!/^https?:\/\//i.test(repositoryUrl)) {
+            throw new TypeError("repositoryUrl must be a valid url");
+        }
+
         this._repositoryUrl = repositoryUrl;
+
+        if (!this._repositoryUrl.endsWith("/")) {
+            this._repositoryUrl += "/";
+        }
     }
 
     private static sortVersions(a: Version, b: Version): number {
-        const numberize = (version: Version) => Number(version.replace(/[\.a]/g, ""));
+        const numberize = (version: Version) => {
+            const {
+                groups: { major, minor, fix },
+            } = version.match(/^(?<major>\d{1,3})\.(?<minor>\d{1,3})[a\.]?(?<fix>\d{0,3})$/);
+            return (
+                Number.parseInt(major) * 1000000 +
+                Number.parseInt(minor) * 1000 +
+                Number.parseInt(fix)
+            );
+        };
 
         return numberize(a) - numberize(b);
     }

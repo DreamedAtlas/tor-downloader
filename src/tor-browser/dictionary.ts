@@ -1,6 +1,6 @@
 type Version = string;
 
-type ReleasePlatform = string;
+type ReleasePlatform = "osx" | "linux" | "win" | string;
 
 enum Branch {
     ALPHA = "alpha",

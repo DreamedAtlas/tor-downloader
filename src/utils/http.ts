@@ -7,7 +7,7 @@ const getInternalRequestPromise = (returnBody: boolean, url: string, options?: R
     return new Promise<string | IncomingMessage>((resolve, reject) => {
         const internalRequest = (_url: typeof url, _options?: typeof options) => {
             let req: ClientRequest;
-            if (_url.startsWith("https")) {
+            if (_url.toLowerCase().startsWith("https")) {
                 req = requestHttps(_url, _options);
             } else {
                 req = requestHttp(_url, _options);
@@ -16,7 +16,7 @@ const getInternalRequestPromise = (returnBody: boolean, url: string, options?: R
             req.on("error", reject);
 
             req.on("response", (res) => {
-                if (!res.statusCode) {
+                if (!res.statusCode || res.statusCode <= 0) {
                     return reject(
                         new RuntimeError("Unknown error: missing status code on response"),
                     );
@@ -24,12 +24,9 @@ const getInternalRequestPromise = (returnBody: boolean, url: string, options?: R
 
                 // Follow redirects
                 if ([301, 302, 303, 307, 308].includes(res.statusCode)) {
-                    let requestOptions = _options;
-                    if (!requestOptions) {
-                        requestOptions = { method: "GET" };
-                    }
+                    let requestOptions = Object.assign({}, _options);
 
-                    if ([301, 302, 303].includes(res.statusCode)) {
+                    if (!_options || [301, 302, 303].includes(res.statusCode)) {
                         // Update method to GET - RFC 7231
                         requestOptions.method = "GET";
                     }
@@ -37,7 +34,7 @@ const getInternalRequestPromise = (returnBody: boolean, url: string, options?: R
                     return internalRequest(res.headers.location, requestOptions);
                 }
 
-                if (res.statusCode === 0 || Math.floor(res.statusCode / 100) !== 2) {
+                if (Math.floor(res.statusCode / 100) !== 2) {
                     const message = res.statusMessage || String(res.statusCode);
                     return reject(new HttpError(message, res.statusCode));
                 }
