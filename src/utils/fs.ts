@@ -34,9 +34,9 @@ async function chmodAddX(path: string) {
     return await chmod(path, mode | S_IXUSR | S_IXGRP | S_IXOTH);
 }
 
-function mkdir(prefix: string, options?: MakeDirectoryOptions) {
+function mkdir(path: string, options?: MakeDirectoryOptions) {
     return new Promise<string>((resolve, reject) => {
-        mkdirFs(prefix, options, (err, path) => {
+        mkdirFs(path, options, (err, path) => {
             if (err) {
                 return reject(err);
             }

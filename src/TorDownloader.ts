@@ -1,9 +1,6 @@
 import { spawn } from "child_process";
 import { RuntimeError } from "./errors";
-import {
-    createReadStream as createFSReadStream,
-    createWriteStream as createFSWriteStream,
-} from "fs";
+import { createWriteStream as createFSWriteStream } from "fs";
 import { basename as basenamePath, join as joinPath } from "path";
 import {
     Branch as TorBrowserBranch,
@@ -11,12 +8,11 @@ import {
 } from "./tor-browser/dictionary";
 import { Release as TorBrowserRelease } from "./tor-browser/Release";
 import { Repository as TorBrowserRepository } from "./tor-browser/Repository";
-import { unzip } from "./utils/archive";
+import { decompressXz, unzip } from "./utils/archive";
 import { chmodAddX, mkdir, mkdirTemp, readdir, rename, rm } from "./utils/fs";
 import { requestStream } from "./utils/http";
-import { Decompressor } from "xz";
 
-export class TorDownloader {
+class TorDownloader {
     private static TOR_BINARY_FILENAME = "tor";
     private static MAR_BINARY_FILE_PATH = "mar-tools/signmar";
     private static UNPACKED_TOR_BROWSER_PATH = "tor-browser";
@@ -64,10 +60,24 @@ export class TorDownloader {
         return joinPath(this.operationDirectoryPath, TorDownloader.MAR_BINARY_FILE_PATH);
     }
 
-    private async unpackTorBrowser() {
-        const marBinaryFilePath = this.getMarBinaryPath();
+    private execMarUnpack(toPath: string) {
+        return new Promise<number>((resolve, reject) => {
+            const marProcess = spawn(
+                this.getMarBinaryPath(),
+                ["-C", toPath, "-x", this.torBrowserFilePath],
+                {
+                    cwd: this.operationDirectoryPath,
+                },
+            );
 
-        await chmodAddX(marBinaryFilePath);
+            marProcess.on("error", reject);
+
+            marProcess.on("close", (code) => resolve(code));
+        });
+    }
+
+    private async unpackTorBrowser() {
+        await chmodAddX(this.getMarBinaryPath());
 
         const unpackedTorBrowserPath = joinPath(
             this.operationDirectoryPath,
@@ -82,19 +92,7 @@ export class TorDownloader {
             }
         }
 
-        await new Promise<number>((resolve, reject) => {
-            const marProcess = spawn(
-                marBinaryFilePath,
-                ["-C", unpackedTorBrowserPath, "-x", this.torBrowserFilePath],
-                {
-                    cwd: this.operationDirectoryPath,
-                },
-            );
-
-            marProcess.on("error", reject);
-
-            marProcess.on("close", (code) => resolve(code));
-        });
+        await this.execMarUnpack(unpackedTorBrowserPath);
 
         return unpackedTorBrowserPath;
     }
@@ -162,18 +160,7 @@ export class TorDownloader {
                 if (file.isFile()) {
                     const decompressedFilePath = `${filePath}.decompressed`;
 
-                    await new Promise<void>((resolve, reject) => {
-                        const readStream = createFSReadStream(filePath);
-                        const writeStream = createFSWriteStream(decompressedFilePath);
-                        const decompressor = new Decompressor();
-
-                        readStream.on("error", reject);
-                        decompressor.on("error", reject);
-                        writeStream.on("error", reject);
-                        writeStream.on("close", () => resolve());
-
-                        readStream.pipe(decompressor).pipe(writeStream);
-                    });
+                    await decompressXz(filePath, decompressedFilePath);
 
                     await rm(filePath);
                     await rename(decompressedFilePath, filePath);
@@ -250,3 +237,5 @@ export class TorDownloader {
         return chmodAddX(joinPath(torDirectoryPath, this.getTorBinaryFilename(platform)));
     }
 }
+
+export { TorDownloader };
