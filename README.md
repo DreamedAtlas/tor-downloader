@@ -14,10 +14,10 @@ To do so, this library downloads TorBrowser and extracts Tor from its archive.
 # Install Tor Downloader
 
 # NPM
-npm install tor-downloader
+npm install @dreamed-atlas/tor-downloader --save
 
 # Yarn
-yarn add tor-downloader
+yarn add @dreamed-atlas/tor-downloader
 ```
 
 ### Retrieve Tor for the current platform
@@ -26,7 +26,7 @@ yarn add tor-downloader
 const { join } = require("path");
 const { tmpdir } = require("os");
 const { spawn } = require("child_process");
-const { TorDownloader } = require("tor-downloader");
+const { TorDownloader } = require("@dreamed-atlas/tor-downloader");
 
 (async () => {
     // Directory where Tor will be retrieved
@@ -62,7 +62,7 @@ const {
     TorDownloader,
     TorBrowserRelease,
     TorBrowserBranch,
-} = require("tor-downloader");
+} = require("@dreamed-atlas/tor-downloader");
 
 (async () => {
     // Directory where Tor will be retrieved
@@ -95,7 +95,7 @@ const {
     TorDownloader,
     TorBrowserRelease,
     TorBrowserBranch,
-} = require("tor-downloader");
+} = require("@dreamed-atlas/tor-downloader");
 
 (async () => {
     const torDownloader = new TorDownloader();
@@ -115,7 +115,7 @@ const {
 If you want to use a [Tor mirroir](https://2019.www.torproject.org/getinvolved/mirrors.html.en) closer to your location or you're in one of the many places in the world where you can't use HTTPS:
 
 ```js
-const { TorDownloader, TorBrowserRepository } = require("tor-downloader");
+const { TorDownloader, TorBrowserRepository } = require("@dreamed-atlas/tor-downloader");
 
 (async () => {
     const torBrowserRepository = new TorBrowserRepository(
