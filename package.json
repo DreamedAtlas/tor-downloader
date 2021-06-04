@@ -1,11 +1,12 @@
 {
-  "name": "tor-downloader",
+  "name": "@dreamed-atlas/tor-downloader",
   "version": "1.0.0",
   "description": "A NodeJS library to download Tor binary for several platforms and architectures",
   "keywords": [
     "tor",
     "binary",
-    "downloader"
+    "downloader",
+    "dreamed-atlas"
   ],
   "license": "MIT",
   "author": "Dreamed Atlas (https://github.com/DreamedAtlas)",
