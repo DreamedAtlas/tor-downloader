@@ -1,4 +1,10 @@
+.husky/
+coverage/
 src/
 .editorconfig
+.lintstagedrc
 .prettierrc
+commitlint.config.js
+jest.config.js
+snippet.js
 tsconfig.json
