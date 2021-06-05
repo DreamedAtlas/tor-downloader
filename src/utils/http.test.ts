@@ -2,7 +2,7 @@ import { HttpError, RuntimeError } from "../errors";
 import { ClientRequest, IncomingMessage, request as requestHttp } from "http";
 import { request as requestHttps, RequestOptions } from "https";
 import { Writable } from "stream";
-import { request, requestStream } from "./http";
+import { request, writeRequestStream } from "./http";
 
 jest.mock("http");
 const mockRequestHttp = requestHttp as jest.MockedFunction<typeof requestHttp>;
@@ -187,7 +187,7 @@ describe("http", () => {
         });
     });
 
-    describe("requestStream", () => {
+    describe("writeRequestStream", () => {
         it("should make http(s) requests", async () => {
             const test = async (options?: RequestOptions) => {
                 mockRequestHttps.mockClear();
@@ -208,7 +208,7 @@ describe("http", () => {
                     }),
                 };
 
-                await requestStream(mockWritable as Writable, url, options);
+                await writeRequestStream(mockWritable as Writable, url, options);
 
                 expect(mockRequestHttps).toBeCalledTimes(1);
                 expect(mockRequestHttps).toBeCalledWith(url, options);
@@ -237,9 +237,9 @@ describe("http", () => {
                 on: jest.fn(),
             };
 
-            const reqStream = () => requestStream(mockWritable as Writable, url);
+            const writeReqStream = () => writeRequestStream(mockWritable as Writable, url);
 
-            await expect(reqStream).rejects.toThrow(error);
+            await expect(writeReqStream).rejects.toThrow(error);
 
             let mockIncomingMessage = getMockIncomingMessage(200);
             mockClientRequest = getMockClientRequest(null, mockIncomingMessage);
@@ -249,7 +249,7 @@ describe("http", () => {
                 }
             });
 
-            await expect(reqStream).rejects.toThrow(error);
+            await expect(writeReqStream).rejects.toThrow(error);
         });
     });
 });

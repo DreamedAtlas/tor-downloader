@@ -76,6 +76,10 @@ class Repository {
     getMarToolsUrl(release: Release): string {
         return `${this.getReleaseDirectoryUrl(release.version)}${release.getMarToolsFilename()}`;
     }
+
+    getSha256SumsUrl(version: Version): string {
+        return `${this.getReleaseDirectoryUrl(version)}sha256sums-signed-build.txt`;
+    }
 }
 
 export { Repository };

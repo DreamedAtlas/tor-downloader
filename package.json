@@ -32,11 +32,13 @@
     "@commitlint/config-conventional": "^12.1.4",
     "@types/jest": "^26.0.23",
     "@types/node": "^15.6.0",
+    "@types/openpgp": "^4.4.16",
     "@types/rimraf": "^3.0.0",
     "husky": "^6.0.0",
     "jest": "^27.0.3",
     "jest-mock-extended": "^1.0.15",
     "lint-staged": "^11.0.0",
+    "openpgp": "^4.10.10",
     "prettier": "^2.3.0",
     "prettylint": "^1.0.0",
     "ts-jest": "^27.0.1",
@@ -46,5 +48,13 @@
     "node-stream-zip": "^1.13.4",
     "rimraf": "^3.0.2",
     "xz": "^2.0.2"
+  },
+  "peerDependencies": {
+    "openpgp": "4"
+  },
+  "peerDependenciesMeta": {
+    "openpgp": {
+      "optional": true
+    }
   }
 }

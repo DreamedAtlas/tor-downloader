@@ -7,7 +7,7 @@ import { Release as TorBrowserRelease } from "./tor-browser/Release";
 import { Repository as TorBrowserRepository } from "./tor-browser/Repository";
 import { decompressXz, unzip } from "./utils/archive";
 import { chmodAddX, mkdir, mkdirTemp, readdir, rename, rm } from "./utils/fs";
-import { requestStream } from "./utils/http";
+import { writeRequestStream } from "./utils/http";
 import { TorDownloader } from "./TorDownloader";
 import { mock, mockDeep, MockProxy } from "jest-mock-extended";
 import { tmpdir } from "os";
@@ -23,7 +23,7 @@ const mockCreateFSWriteStream = createFSWriteStream as jest.MockedFunction<
 >;
 
 jest.mock("./utils/http");
-const mockRequestStream = requestStream as jest.MockedFunction<typeof requestStream>;
+const mockWriteRequestStream = writeRequestStream as jest.MockedFunction<typeof writeRequestStream>;
 
 jest.mock("child_process");
 const mockSpawn = spawn as jest.MockedFunction<typeof spawn>;
@@ -44,7 +44,7 @@ describe("Tor Downloader", () => {
     beforeEach(() => {
         mockTBRepository.mockClear();
         mockCreateFSWriteStream.mockClear();
-        mockRequestStream.mockClear();
+        mockWriteRequestStream.mockClear();
         mockSpawn.mockClear();
         mockChmodAddX.mockClear();
         mockMkdir.mockClear();
@@ -100,8 +100,8 @@ describe("Tor Downloader", () => {
         expect(mockCreateFSWriteStream).toBeCalledTimes(2);
         expect(mockCreateFSWriteStream).toBeCalledWith(expectedFilePath);
 
-        expect(mockRequestStream).toBeCalledTimes(2);
-        expect(mockRequestStream).toBeCalledWith(mockWriteStream, releaseUrl);
+        expect(mockWriteRequestStream).toBeCalledTimes(2);
+        expect(mockWriteRequestStream).toBeCalledWith(mockWriteStream, releaseUrl);
     });
 
     it("should get the path to the mar binary", () => {

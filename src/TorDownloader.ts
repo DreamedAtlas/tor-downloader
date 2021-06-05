@@ -1,16 +1,23 @@
 import { spawn } from "child_process";
-import { RuntimeError } from "./errors";
-import { createWriteStream as createFSWriteStream } from "fs";
+import { RuntimeError, SignatureError } from "./errors";
+import {
+    createReadStream as createFSReadStream,
+    createWriteStream as createFSWriteStream,
+} from "fs";
 import { basename as basenamePath, join as joinPath } from "path";
 import {
     Branch as TorBrowserBranch,
     ReleasePlatform as TorBrowserReleasePlatform,
 } from "./tor-browser/dictionary";
+import { Version as TorBrowserVersion } from "./tor-browser/dictionary";
 import { Release as TorBrowserRelease } from "./tor-browser/Release";
 import { Repository as TorBrowserRepository } from "./tor-browser/Repository";
+import { SignatureVerifier as TorBrowserSignatureVerifier } from "./tor-browser/SignatureVerifier";
 import { decompressXz, unzip } from "./utils/archive";
+import { sha256Sum } from "./utils/crypto";
 import { chmodAddX, mkdir, mkdirTemp, readdir, rename, rm } from "./utils/fs";
-import { requestStream } from "./utils/http";
+import { requestStream, writeRequestStream } from "./utils/http";
+import { createInterface } from "readline";
 
 class TorDownloader {
     private static TOR_BINARY_FILENAME = "tor";
@@ -18,12 +25,18 @@ class TorDownloader {
     private static UNPACKED_TOR_BROWSER_PATH = "tor-browser";
 
     private repository: TorBrowserRepository;
+    private signatureVerifier: TorBrowserSignatureVerifier;
     private operationDirectoryPath: string;
     private torBrowserFilePath: string;
     private marToolsFilePath: string;
+    private sha256SumsFilePath: string;
 
-    constructor(repository: TorBrowserRepository = new TorBrowserRepository()) {
+    constructor(
+        repository: TorBrowserRepository = new TorBrowserRepository(),
+        signatureVerifier: TorBrowserSignatureVerifier = new TorBrowserSignatureVerifier(),
+    ) {
         this.repository = repository;
+        this.signatureVerifier = signatureVerifier;
     }
 
     private static async fetchFile(url: string, directoryPath: string) {
@@ -31,7 +44,7 @@ class TorDownloader {
         const filePath = joinPath(directoryPath, filename);
 
         const fileWriteStream = createFSWriteStream(filePath);
-        await requestStream(fileWriteStream, url);
+        await writeRequestStream(fileWriteStream, url);
 
         return filePath;
     }
@@ -44,10 +57,23 @@ class TorDownloader {
     }
 
     private async fetchMarTools(torBrowserRelease: TorBrowserRelease) {
-        return await TorDownloader.fetchFile(
-            this.repository.getMarToolsUrl(torBrowserRelease),
-            this.operationDirectoryPath,
-        );
+        const marToolsUrl = this.repository.getMarToolsUrl(torBrowserRelease);
+
+        if (await this.signatureVerifier.canOperate()) {
+            await TorDownloader.fetchFile(`${marToolsUrl}.asc`, this.operationDirectoryPath);
+        }
+
+        return await TorDownloader.fetchFile(marToolsUrl, this.operationDirectoryPath);
+    }
+
+    private async fetchSha256Sums(version: TorBrowserVersion) {
+        const sha256SumsUrl = this.repository.getSha256SumsUrl(version);
+
+        if (await this.signatureVerifier.canOperate()) {
+            await TorDownloader.fetchFile(`${sha256SumsUrl}.asc`, this.operationDirectoryPath);
+        }
+
+        return await TorDownloader.fetchFile(sha256SumsUrl, this.operationDirectoryPath);
     }
 
     private getMarBinaryPath() {
@@ -58,6 +84,26 @@ class TorDownloader {
             );
         }
         return joinPath(this.operationDirectoryPath, TorDownloader.MAR_BINARY_FILE_PATH);
+    }
+
+    private async torBrowserChecksum() {
+        const torBrowserSha256Sum = await sha256Sum(this.torBrowserFilePath);
+
+        const torBrowserOfficialSha256Sum = await new Promise<string | null>((resolve, reject) => {
+            const readStream = createInterface(createFSReadStream(this.sha256SumsFilePath));
+            const torBrowserFilename = basenamePath(this.torBrowserFilePath);
+            readStream.on("line", (line) => {
+                if (line.includes(torBrowserFilename)) {
+                    resolve(line.split("  ").shift());
+                    return readStream.close();
+                }
+            });
+            readStream.on("close", () => resolve(null));
+        });
+
+        if (torBrowserSha256Sum !== torBrowserOfficialSha256Sum) {
+            throw new SignatureError("Checksum mismath", this.torBrowserFilePath);
+        }
     }
 
     private execMarUnpack(toPath: string) {
@@ -203,6 +249,10 @@ class TorDownloader {
                 }
             }
 
+            await this.signatureVerifier.build();
+
+            const signatureErrorMessage = "Signature mismatch - file not valid";
+
             await Promise.all([
                 // Get Tor Browser
                 (async () => {
@@ -214,9 +264,23 @@ class TorDownloader {
                     this.marToolsFilePath = await this.fetchMarTools(
                         torBrowserRelease.getMarToolsRelease(),
                     );
+
+                    if (!(await this.signatureVerifier.verify(this.marToolsFilePath))) {
+                        throw new SignatureError(signatureErrorMessage, this.marToolsFilePath);
+                    }
+
                     await unzip(this.marToolsFilePath, this.operationDirectoryPath);
                 })(),
+                (async () => {
+                    this.sha256SumsFilePath = await this.fetchSha256Sums(torBrowserRelease.version);
+
+                    if (!(await this.signatureVerifier.verify(this.sha256SumsFilePath))) {
+                        throw new SignatureError(signatureErrorMessage, this.sha256SumsFilePath);
+                    }
+                })(),
             ]);
+
+            await this.torBrowserChecksum();
 
             await this.unpackTorBrowser();
 

@@ -60,14 +60,14 @@ function request(url: string, options?: RequestOptions) {
     return getInternalRequestPromise(true, url, options) as Promise<string>;
 }
 
-function requestStream(writable: Writable, url: string, options?: RequestOptions) {
+function requestStream(url: string, options?: RequestOptions) {
+    return getInternalRequestPromise(false, url, options) as Promise<IncomingMessage>;
+}
+
+function writeRequestStream(writable: Writable, url: string, options?: RequestOptions) {
     return new Promise<void>(async (resolve, reject) => {
         try {
-            const readable = (await getInternalRequestPromise(
-                false,
-                url,
-                options,
-            )) as IncomingMessage;
+            const readable = await requestStream(url, options);
             writable.on("error", reject);
             writable.on("close", () => resolve());
             readable.pipe(writable);
@@ -77,4 +77,4 @@ function requestStream(writable: Writable, url: string, options?: RequestOptions
     });
 }
 
-export { request, requestStream };
+export { request, requestStream, writeRequestStream };
