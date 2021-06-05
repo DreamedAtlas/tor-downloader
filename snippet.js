@@ -28,7 +28,10 @@ const {
     // Add execution rights to the Tor binary file
     await torDownloader.addExecutionRigthsOnTorBinaryFile(torPath);
 
-    const torBinaryPath = join(torPath, torDownloader.getTorBinaryFilename());
+    const torBinaryPath = join(
+        torPath,
+        torDownloader.getTorBinaryFilename(torBrowserRelease.platform),
+    );
 
     // Spawn a Tor process
     await new Promise((resolve, reject) => {
