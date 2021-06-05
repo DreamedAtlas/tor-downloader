@@ -6,7 +6,7 @@ To do so, this library downloads TorBrowser and extracts Tor from its archive.
 
 ## Version Support
 
-- Node.js >= 10.12.0
+-   Node.js >= 10.12.0
 
 ## Getting Started
 
@@ -84,7 +84,10 @@ const {
     await torDownloader.addExecutionRigthsOnTorBinaryFile(torPath);
 
     // Get path to the tor binary file
-    const torBinaryPath = join(torPath, torDownloader.getTorBinaryFilename());
+    const torBinaryPath = join(
+        torPath,
+        torDownloader.getTorBinaryFilename(torBrowserRelease.platform),
+    );
 })();
 ```
 
@@ -101,9 +104,7 @@ const {
     const torDownloader = new TorDownloader();
 
     // Target branch alpha
-    const torBrowserRelease = await TorBrowserRelease.fromBranch(
-        TorBrowserBranch.ALPHA,
-    );
+    const torBrowserRelease = await TorBrowserRelease.fromBranch(TorBrowserBranch.ALPHA);
 
     // Retrieve Tor to torPath
     await torDownloader.retrieve(torPath, torBrowserRelease);
