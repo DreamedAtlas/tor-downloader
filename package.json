@@ -1,38 +1,32 @@
 {
-  "name": "@dreamed-atlas/tor-downloader",
-  "version": "1.0.0",
-  "description": "A NodeJS library to download Tor binary for several platforms and architectures",
+  "name": "@dreamed-atlas/node-tor",
+  "version": "0.0.0",
+  "description": "A set of utility packages to bring Tor on Node.js",
+  "private": true,
   "keywords": [
     "tor",
-    "binary",
-    "downloader",
+    "node.js",
+    "utility",
     "dreamed-atlas"
   ],
   "license": "MIT",
   "author": "Dreamed Atlas (https://github.com/DreamedAtlas)",
-  "homepage": "https://github.com/DreamedAtlas/tor-downloader",
+  "homepage": "https://github.com/DreamedAtlas/node-tor",
   "repository": {
     "type": "git",
-    "url": "https://github.com/DreamedAtlas/tor-downloader.git"
+    "url": "https://github.com/DreamedAtlas/node-tor.git"
   },
   "scripts": {
-    "build": "tsc",
-    "lint:check": "prettylint \"src/**/*.ts\"",
-    "lint:fix": "prettier --write \"src/**/*.ts\"",
+    "build": "tsc --build ./packages/*/tsconfig.build.json",
+    "lint:check": "prettylint \"**/*.{ts,js,md}\"",
+    "lint:fix": "prettier --write \"**/*.{ts,js,md}\"",
     "prepare": "husky install",
     "test": "jest"
-  },
-  "main": "dist/index.js",
-  "types": "dist/index.d.js",
-  "engines": {
-    "node": ">=10.12.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^12.1.4",
     "@commitlint/config-conventional": "^12.1.4",
     "@types/jest": "^26.0.23",
-    "@types/node": "^15.6.0",
-    "@types/rimraf": "^3.0.0",
     "husky": "^6.0.0",
     "jest": "^27.0.3",
     "jest-mock-extended": "^1.0.15",
@@ -42,9 +36,7 @@
     "ts-jest": "^27.0.1",
     "typescript": "^4.2.4"
   },
-  "dependencies": {
-    "node-stream-zip": "^1.13.4",
-    "rimraf": "^3.0.2",
-    "xz": "^2.0.2"
-  }
+  "workspaces": [
+    "./packages/*"
+  ]
 }

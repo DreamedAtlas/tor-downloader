@@ -1,5 +1,10 @@
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
+    projects: [
+        {
+            displayName: "tor-downloader",
+            preset: "ts-jest",
+            roots: ["<rootDir>/packages/tor-downloader/src"],
+            testEnvironment: "node",
+        },
+    ],
 };
